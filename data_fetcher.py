@@ -203,6 +203,8 @@ class DataFetcher():
         """
         code_names = [*CRITERIA_POLLUTANTS, *MET_VARS]
         
+        print("I tried :( 2")
+        
         codes = [self.find_code(v) for v in code_names]
         dct = {codes[i]: code_names[i] for i in range(len(codes))}
 
