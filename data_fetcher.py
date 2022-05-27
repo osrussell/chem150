@@ -211,7 +211,7 @@ class DataFetcher():
             if verbose:
                 print(f"\n Fetching data for {dct[code]}...", end="\n\n")
             
-            df = self.get_data(SAMPLE_DATA_BY_SITE, code, bdate, edate, df=True, nparams={'state':state, 'county':county, 'site': site})
+            df = self.get_concat_data(code, bdate, edate, site, county, state)
 
             if df.empty:
                 print(f"No data for {dct[code]}")
@@ -223,6 +223,40 @@ class DataFetcher():
             dfs.append(df)
 
         return self.processor.join(dfs)
+
+    def get_concat_data(self, code, bdate, edate, site=None, county=None, state=None):
+        """
+        Automatically fetches multiple years in a row and concats them!
+        """
+
+        byear = bdate // 10000
+        eyear = edate // 10000
+        diff = eyear - byear
+
+        # in one year
+        if diff == 0:
+        # regular pull
+            df = self.get_data(SAMPLE_DATA_BY_SITE, code, bdate, edate, df=True, nparams={'state':state, 'county':county, 'site': site})
+        
+        # spans multiple years
+        else:
+            # for first year, also creates df 
+            yr_end = int(str(byear) + "1231")
+            df = self.get_data(SAMPLE_DATA_BY_SITE, code, bdate, yr_end, df=True, nparams={'state':state, 'county':county, 'site': site})
+            # print("pulling " + str(bdate) + " to " + str(last_date))
+
+            # for middle years (if they exist)
+            for x in range(diff-1):
+                curyear = byear + x + 1
+                mid_start = int(str(curyear) + "0101")
+                mid_end = int(str(curyear) + "1231")
+                df = pd.concat([df, self.get_data(SAMPLE_DATA_BY_SITE, code, mid_start, mid_end, df=True, nparams={'state':state, 'county':county, 'site': site})])
+
+            # for last year
+            yr_start = int(str(eyear) + "0101")
+            df = pd.concat([df, self.get_data(SAMPLE_DATA_BY_SITE, code, yr_start, edate, df=True, nparams={'state':state, 'county':county, 'site': site})])
+
+        return df
     
     def find_best_location(self, state='06', county='037', bdate=20000101, edate=20210101):
         """
