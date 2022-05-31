@@ -213,12 +213,10 @@ class DataFetcher():
 
         dfs = []
         for code in codes:
-            # this code could be optimized to not be as duplciate
             # if there are other parameters besides wind with duplicates, I could make a dictionary and this would be less duplicate-y
-            # OK I'M PAUSING BECAUSE THESE ARE CODES NOT VALS !!
-            print(code)
+            # This code has conditions for the multiple names that wind speed and direction can have
+            # print(code)
             if (code == s_resultant):
-                print(f"THIS RAN THE RIGHT CODE FOR SPEED")
                 if verbose:
                     print(f"\n Fetching data for Wind Speed...", end="\n\n")
             
