@@ -202,25 +202,60 @@ class DataFetcher():
         DataFetcher().create_dataset(20200101, 20200102, site='1103', county='037', state='06', processed=True, verbose=False)
         """
         code_names = [*CRITERIA_POLLUTANTS, *MET_VARS]
-        
-        print("I tried :( 2")
+
+        s_resultant = self.find_code("Wind Speed - Resultant")
+        s_scalar = self.find_code("Wind Speed - Scalar")
+        d_resultant = self.find_code("Wind Direction - Resultant")
+        d_scalar = self.find_code("Wind Direction - Scalar")
         
         codes = [self.find_code(v) for v in code_names]
         dct = {codes[i]: code_names[i] for i in range(len(codes))}
 
         dfs = []
         for code in codes:
-            if verbose:
-                print(f"\n Fetching data for {dct[code]}...", end="\n\n")
+            # this code could be optimized to not be as duplciate
+            # if there are other parameters besides wind with duplicates, I could make a dictionary and this would be less duplicate-y
+            # OK I'M PAUSING BECAUSE THESE ARE CODES NOT VALS !!
+            if (code == s_resultant):
+                if verbose:
+                    print(f"\n Fetching data for Wind Speed...", end="\n\n")
             
-            df = self.get_concat_data(code, bdate, edate, site, county, state)
+                df = self.get_concat_data(code, bdate, edate, site, county, state)
 
-            if df.empty:
-                print(f"No data for {dct[code]}")
-                continue
+                if df.empty:
+                    df = self.get_concat_data(s_scalar, bdate, edate, site, county, state)
+                    if df.empty:
+                        print(f"No data for Wind Speed (Resultant or Scalar)")
+                        continue 
+
+                if processed:
+                    df = self.processor.process(df, dct[code])
+            elif (code == d_resultant):
+                if verbose:
+                    print(f"\n Fetching data for Wind Direction...", end="\n\n")
             
-            if processed:
-                df = self.processor.process(df, dct[code])
+                df = self.get_concat_data(code, bdate, edate, site, county, state)
+
+                if df.empty:
+                    df = self.get_concat_data(d_scalar, bdate, edate, site, county, state)
+                    if df.empty:
+                        print(f"No data for Wind Direction (Resultant or Scalar)")
+                        continue 
+
+                if processed:
+                    df = self.processor.process(df, dct[code])
+            else:
+                if verbose:
+                    print(f"\n Fetching data for {dct[code]}...", end="\n\n")
+            
+                df = self.get_concat_data(code, bdate, edate, site, county, state)
+
+                if df.empty:
+                    print(f"No data for {dct[code]}")
+                    continue
+
+                if processed:
+                    df = self.processor.process(df, dct[code])
 
             dfs.append(df)
 
