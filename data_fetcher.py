@@ -239,6 +239,7 @@ class DataFetcher():
             df = self.get_data(SAMPLE_DATA_BY_SITE, code, bdate, edate, df=True, nparams={'state':state, 'county':county, 'site': site})
         
         # spans multiple years
+        # I think I can append as a note
         else:
             # for first year, also creates df 
             yr_end = int(str(byear) + "1231")
