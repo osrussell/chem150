@@ -203,6 +203,7 @@ class DataFetcher():
         """
         code_names = [*CRITERIA_POLLUTANTS, *MET_VARS]
 
+        # finds codes for resultant and scalar variables for wind speed and direction
         s_resultant = self.find_code("Wind Speed - Resultant")
         s_scalar = self.find_code("Wind Speed - Scalar")
         d_resultant = self.find_code("Wind Direction - Resultant")
@@ -215,13 +216,15 @@ class DataFetcher():
         for code in codes:
             # if there are other parameters besides wind with duplicates, I could make a dictionary and this would be less duplicate-y
             # This code has conditions for the multiple names that wind speed and direction can have
-            # print(code)
+
+            # for wind speed
             if (code == s_resultant):
                 if verbose:
                     print(f"\n Fetching data for Wind Speed...", end="\n\n")
             
                 df = self.get_concat_data(code, bdate, edate, site, county, state)
 
+                # if no data in the resultant catagory it checks the scalar category
                 if df.empty:
                     df = self.get_concat_data(s_scalar, bdate, edate, site, county, state)
                     if df.empty:
@@ -230,6 +233,7 @@ class DataFetcher():
 
                 if processed:
                     df = self.processor.process(df, dct[code])
+            # for wind direction
             elif (code == d_resultant):
                 print(f"THIS RAN THE RIGHT CODE FOR DIRECTION")
                 if verbose:
@@ -245,6 +249,7 @@ class DataFetcher():
 
                 if processed:
                     df = self.processor.process(df, dct[code])
+            # for all other variables
             else:
                 if verbose:
                     print(f"\n Fetching data for {dct[code]}...", end="\n\n")
@@ -265,6 +270,17 @@ class DataFetcher():
     def get_concat_data(self, code, bdate, edate, site=None, county=None, state=None):
         """
         Automatically fetches multiple years in a row and concats them!
+
+        Parameters:
+            code: the parameter code we're fetching for 
+            bdate: int - First data entry time.
+            edate: int - Last data entry time.
+            site: String - Site code.
+            count: String - County code.
+            state: String - State code.
+        
+        Returns:
+            HTTP Response Data: json or pd.DataFrame
         """
 
         byear = bdate // 10000
