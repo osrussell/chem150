@@ -216,7 +216,8 @@ class DataFetcher():
             # this code could be optimized to not be as duplciate
             # if there are other parameters besides wind with duplicates, I could make a dictionary and this would be less duplicate-y
             # OK I'M PAUSING BECAUSE THESE ARE CODES NOT VALS !!
-            if (code == s_scalar):
+            print(code)
+            if (code == s_resultant):
                 print(f"THIS RAN THE RIGHT CODE FOR SPEED")
                 if verbose:
                     print(f"\n Fetching data for Wind Speed...", end="\n\n")
@@ -224,7 +225,7 @@ class DataFetcher():
                 df = self.get_concat_data(code, bdate, edate, site, county, state)
 
                 if df.empty:
-                    df = self.get_concat_data(s_resultant, bdate, edate, site, county, state)
+                    df = self.get_concat_data(s_scalar, bdate, edate, site, county, state)
                     if df.empty:
                         print(f"No data for Wind Speed (Resultant or Scalar)")
                         continue 
@@ -531,4 +532,4 @@ class DataFetcher():
 
 CRITERIA_POLLUTANTS = ["Carbon monoxide", "Nitrogen dioxide (NO2)", "Ozone", "PM2.5 - Local Conditions"]
 PAMS = ["Nitric oxide (NO)", "Oxides of nitrogen (NOx)"]
-MET_VARS = ["Wind Direction - Scalar", "Wind Speed - Resultant", "Outdoor Temperature", "Relative Humidity ", "Solar radiation", "Ultraviolet radiation", "Barometric pressure"] 
+MET_VARS = ["Wind Direction - Resultant", "Wind Speed - Resultant", "Outdoor Temperature", "Relative Humidity ", "Solar radiation", "Ultraviolet radiation", "Barometric pressure"] 
