@@ -217,6 +217,7 @@ class DataFetcher():
             # if there are other parameters besides wind with duplicates, I could make a dictionary and this would be less duplicate-y
             # OK I'M PAUSING BECAUSE THESE ARE CODES NOT VALS !!
             if (code == s_scalar):
+                print(f"THIS RAN THE RIGHT CODE FOR SPEED")
                 if verbose:
                     print(f"\n Fetching data for Wind Speed...", end="\n\n")
             
@@ -231,6 +232,7 @@ class DataFetcher():
                 if processed:
                     df = self.processor.process(df, dct[code])
             elif (code == d_resultant):
+                print(f"THIS RAN THE RIGHT CODE FOR DIRECTION")
                 if verbose:
                     print(f"\n Fetching data for Wind Direction...", end="\n\n")
             
