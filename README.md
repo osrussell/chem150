@@ -1,7 +1,7 @@
 # CHEM150 Atmospheric Chemistry ML Modelling
-## Author: Thomas Cintra
+## Authors: Thomas Cintra (and Olivia Russell adding)
 
-This is my lab github repo :) 
+This began as Thomas' lab repository and Olivia continued to add features to the data fetcher.
 
 # Outline
 
