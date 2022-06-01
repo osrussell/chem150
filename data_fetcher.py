@@ -4,11 +4,11 @@ import random
 import datetime
 from dateutil.relativedelta import relativedelta
 import numpy as np
-import netCDF4 as nc
+# import netCDF4 as nc
 from bs4 import BeautifulSoup
 import json
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 from preprocessing import Processor
 
@@ -16,7 +16,7 @@ from preprocessing import Processor
 # EMAIL="example@example.com"
 # KEY="example"
 
-load_dotenv()
+# load_dotenv()
 
 URL = 'https://aqs.epa.gov/data/api/'
 
