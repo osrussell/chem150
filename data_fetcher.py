@@ -235,7 +235,6 @@ class DataFetcher():
                     df = self.processor.process(df, dct[code])
             # for wind direction
             elif (code == d_resultant):
-                print(f"THIS RAN THE RIGHT CODE FOR DIRECTION")
                 if verbose:
                     print(f"\n Fetching data for Wind Direction...", end="\n\n")
             
