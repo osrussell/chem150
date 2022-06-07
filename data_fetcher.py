@@ -254,6 +254,7 @@ class DataFetcher():
                     print(f"\n Fetching data for {dct[code]}...", end="\n\n")
             
                 df = self.get_concat_data(code, bdate, edate, site, county, state)
+                # print(df)
 
                 if df.empty:
                     print(f"No data for {dct[code]}")
@@ -325,20 +326,24 @@ class DataFetcher():
         Returns:
             dict - Output of search.
         """
+        # gets all counties in the state -- this part looks really good 
         print(f"Searching county {county} in state {state}...", end=" ")
         sites = self.get_codes(LIST_SITES_BY_COUNTY, all=True, nparams={'state':state, 'county':county})
         sites = [(site['code'], site['value_represented']) for site in sites if site['value_represented']]
         print(f"Found {len(sites)} sites.")
 
         codes = [self.find_code(v) for v in [*CRITERIA_POLLUTANTS , *MET_VARS, *PAMS]]
+        # now it gets sample days 
         sample_days = [self.sample_day_in_year(year, year + 10000) for year in range(bdate, edate, 50000)]
         # sample_days = [(i, i+1130) for i in range(20000101, 20210101, 50000)]
+        print(sample_days)
         res = {}
         res['Data'] = {}
         res['Metadata'] = {'dates':sample_days, 'codes':codes}
         for site, name in sites:
             res['Data'][name] = []
             for code in codes:
+                # find_did_availability pulls from bdate to edate, which were determined for one year
                 year_res = [self.find_data_availability(site, county, state, code, bdate, edate) for bdate, edate in sample_days]
                 res['Data'][name].append(year_res)
             print(f"Finished site {site}, {name}")

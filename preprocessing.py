@@ -39,18 +39,40 @@ class Processor():
 
         return df
     
+    
     def process(self, df, measurement, change_freq=False, select_method=False, drop_lat_lon=True, remove_duplicates=False):
+        '''
+        Generates a more concise version of the dataset.
+
+        Parameters:
+            df: dataframe -- the dataframe of raw data for one parameter
+            measurement: -- the code for the parameter for the dataframe
+        
+        Returns:
+            HTTP Response Data: json or pd.DataFrame
+
+        '''
         if select_method:
             df = df.loc[df['method'] == df['method'].unique()[0]].copy()
+
+        # converts into data time and renames measurement
         df['datetime'] = pd.to_datetime(df['date_local'] + ' ' + df['time_local'])
-        df = df[['datetime', 'sample_measurement', 'latitude', 'longitude']]
+        df = df[['datetime', 'sample_measurement', 'latitude', 'longitude', 'sample_duration']]
         df = df.rename({'sample_measurement': measurement}, axis=1)
 
         # TODO: Fix this, currently just select the first year period to avoid duplicate index, but this might select the wrong data
-        duplicates = df.duplicated(subset='datetime', keep='first')
-        duplicates = np.where(duplicates)[0]
-        if len(duplicates) > 0:
-            df = df.iloc[:duplicates[0]]
+        # duplicates = df.duplicated(subset='datetime', keep='first')
+        # duplicates = np.where(duplicates)[0]
+        # if len(duplicates) > 0:
+        #     df = df.iloc[:duplicates[0]]
+
+        # selects only hourly data
+        df = df[df['sample_duration'] == "1 HOUR"]
+        df = df.drop(['sample_duration'], axis=1)
+        if df.empty:
+            print(f"No hourly data for {measurement}")
+            df = df.drop(['latitude', 'longitude', measurement], axis=1)
+            return df
         
         df.set_index(['datetime'], inplace=True)
 
