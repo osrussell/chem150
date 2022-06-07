@@ -187,7 +187,7 @@ class DataFetcher():
         Generates core dataset (CRITERIA pollutants and MET vars).
 
         Parameters:
-            bdate: int - First data entry time.
+            bdate: int - First data entry time. -- standardize to gmt!!!??
             edate: int - Last data entry time.
             site: String - Site code.
             count: String - County code.
@@ -310,6 +310,18 @@ class DataFetcher():
             # for last year
             yr_start = int(str(eyear) + "0101")
             df = pd.concat([df, self.get_data(SAMPLE_DATA_BY_SITE, code, yr_start, edate, df=True, nparams={'state':state, 'county':county, 'site': site})])
+
+        # now for the sanity check of if the data is valid!
+        # this checks dates, 
+        bdate_str = str(bdate)
+        bdate_str = bdate_str[0:4] + '-' + bdate_str[4:6] + '-' + bdate_str[6:]
+        if (df.at[0, 'site_number'] != str(site)) or (df.at[0, 'parameter'] != str(self.find_name(code))) or (df.at[0, 'date_gmt'] != bdate_str):
+            # now check the end of the dataframe 
+            edate_str = str(edate)
+            edate_str = edate_str[0:4] + '-' + edate_str[4:6] + '-' + edate_str[6:]
+            last = len(df.index)
+            if (df.at[last, 'site_number'] != str(site)) or (df.at[last, 'parameter'] != str(self.find_name(code))) or (df.at[last, 'date_gmt'] != edate_str):
+                print(f"Data doesn't match query for {self.find_name(code)}!!")
 
         return df
     
