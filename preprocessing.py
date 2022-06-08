@@ -60,12 +60,6 @@ class Processor():
         df = df[['datetime', 'sample_measurement', 'latitude', 'longitude', 'sample_duration']]
         df = df.rename({'sample_measurement': measurement}, axis=1)
 
-        # TODO: Fix this, currently just select the first year period to avoid duplicate index, but this might select the wrong data
-        # duplicates = df.duplicated(subset='datetime', keep='first')
-        # duplicates = np.where(duplicates)[0]
-        # if len(duplicates) > 0:
-        #     df = df.iloc[:duplicates[0]]
-
         # selects only hourly data
         df = df[df['sample_duration'] == "1 HOUR"]
         df = df.drop(['sample_duration'], axis=1)

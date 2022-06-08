@@ -208,6 +208,7 @@ class DataFetcher():
         s_scalar = self.find_code("Wind Speed - Scalar")
         d_resultant = self.find_code("Wind Direction - Resultant")
         d_scalar = self.find_code("Wind Direction - Scalar")
+        pm25 = self.find_code("PM2.5 - Local Conditions")
         
         codes = [self.find_code(v) for v in code_names]
         dct = {codes[i]: code_names[i] for i in range(len(codes))}
@@ -230,9 +231,6 @@ class DataFetcher():
                     if df.empty:
                         print(f"No data for Wind Speed (Resultant or Scalar)")
                         continue 
-
-                if processed:
-                    df = self.processor.process(df, dct[code])
             # for wind direction
             elif (code == d_resultant):
                 if verbose:
@@ -245,13 +243,14 @@ class DataFetcher():
                     if df.empty:
                         print(f"No data for Wind Direction (Resultant or Scalar)")
                         continue 
-
-                if processed:
-                    df = self.processor.process(df, dct[code])
             # for all other variables
             else:
                 if verbose:
                     print(f"\n Fetching data for {dct[code]}...", end="\n\n")
+
+                # if we want to do an extra check for PM2.5 since it's often not hourly 
+                # if code == pm25:
+                #     self.annual_checker(code, bdate, edate, site, county, state)
             
                 df = self.get_concat_data(code, bdate, edate, site, county, state)
                 # print(df)
@@ -259,19 +258,43 @@ class DataFetcher():
                 if df.empty:
                     print(f"No data for {dct[code]}")
                     continue
-
-                if processed:
+            #TODO: I moved this out of the if statements because the continue should jump them!! Not 100% sure it works though
+            if processed:
                     df = self.processor.process(df, dct[code])
 
             dfs.append(df)
         
+        # TODO: Adds error message for if no data is found (right now just displays no data messages and errors)
         # if not dfs:
         #     print("No data found for this time range!")
         #     return dfs
         # else:
         #     return self.processor.join(dfs)
-        
+
         return self.processor.join(dfs)
+
+    def annual_checker(self, code, bdate, edate, site, county, state):
+        '''
+        Uses annual data call to check if there is data in any 5 year range 
+
+        Parameters:
+            code: the parameter code we're checking for.
+            bdate: int - First data entry time.
+            edate: int - Last data entry time.
+            site: String - Site code.
+            count: String - County code.
+            state: String - State code.
+        
+        Returns:
+            Year with valid data or 0 if no valid data 
+        '''
+
+        # keep the print!!!
+        print(f"There is hourly PM2.5 data starting on this year!")
+
+        # current plan
+
+        return 0
 
     def get_concat_data(self, code, bdate, edate, site=None, county=None, state=None):
         """
@@ -319,16 +342,16 @@ class DataFetcher():
 
         # now for the sanity check of if the data is valid!
         # this checks dates, 
-        if not df.empty:
-            bdate_str = str(bdate)
-            bdate_str = bdate_str[0:4] + '-' + bdate_str[4:6] + '-' + bdate_str[6:]
-            if (df.at[0, 'site_number'] != str(site)) or (df.at[0, 'parameter'] != str(self.find_name(code))) or (df.at[0, 'date_gmt'] != bdate_str):
-                # now check the end of the dataframe 
-                edate_str = str(edate)
-                edate_str = edate_str[0:4] + '-' + edate_str[4:6] + '-' + edate_str[6:]
-                last = len(df.index)
-                if (df.at[last, 'site_number'] != str(site)) or (df.at[last, 'parameter'] != str(self.find_name(code))) or (df.at[last, 'date_gmt'] != edate_str):
-                    print(f"Data doesn't match query for {self.find_name(code)}!!")
+        # if not df.empty:
+        #     bdate_str = str(bdate)
+        #     bdate_str = bdate_str[0:4] + '-' + bdate_str[4:6] + '-' + bdate_str[6:]
+        #     if (df.at[0, 'site_number'] != str(site)) or (df.at[0, 'parameter'] != str(self.find_name(code))) or (df.at[0, 'date_gmt'] != bdate_str):
+        #         # now check the end of the dataframe 
+        #         edate_str = str(edate)
+        #         edate_str = edate_str[0:4] + '-' + edate_str[4:6] + '-' + edate_str[6:]
+        #         last = len(df.index)
+        #         if (df.at[last, 'site_number'] != str(site)) or (df.at[last, 'parameter'] != str(self.find_name(code))) or (df.at[last, 'date_gmt'] != edate_str):
+        #             print(f"Data doesn't match query for {self.find_name(code)}!!")
 
         return df
     
