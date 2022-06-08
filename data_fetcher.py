@@ -264,7 +264,13 @@ class DataFetcher():
                     df = self.processor.process(df, dct[code])
 
             dfs.append(df)
-
+        
+        # if not dfs:
+        #     print("No data found for this time range!")
+        #     return dfs
+        # else:
+        #     return self.processor.join(dfs)
+        
         return self.processor.join(dfs)
 
     def get_concat_data(self, code, bdate, edate, site=None, county=None, state=None):
