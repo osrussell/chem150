@@ -20,6 +20,8 @@ from preprocessing import Processor
 
 URL = 'https://aqs.epa.gov/data/api/'
 
+ANNUAL_DATA_BY_SITE = 'annualData/bySite'
+
 # Define some string constants for easy typing
 SAMPLE_DATA_BY_SITE = 'sampleData/bySite'
 SAMPLE_DATA_BY_COUNTY = 'sampleData/byCounty'
@@ -202,6 +204,7 @@ class DataFetcher():
         DataFetcher().create_dataset(20200101, 20200102, site='1103', county='037', state='06', processed=True, verbose=False)
         """
         code_names = [*CRITERIA_POLLUTANTS, *MET_VARS]
+        final_names = []
 
         # finds codes for resultant and scalar variables for wind speed and direction
         s_resultant = self.find_code("Wind Speed - Resultant")
@@ -215,9 +218,6 @@ class DataFetcher():
 
         dfs = []
         for code in codes:
-            # if there are other parameters besides wind with duplicates, I could make a dictionary and this would be less duplicate-y
-            # This code has conditions for the multiple names that wind speed and direction can have
-
             # for wind speed
             if (code == s_resultant):
                 if verbose:
@@ -230,7 +230,11 @@ class DataFetcher():
                     df = self.get_concat_data(s_scalar, bdate, edate, site, county, state)
                     if df.empty:
                         print(f"No data for Wind Speed (Resultant or Scalar)")
-                        continue 
+                        continue
+                    else:
+                        final_names.append(dct[s_scalar])
+                else: 
+                    final_names.append(dct[s_resultant])
             # for wind direction
             elif (code == d_resultant):
                 if verbose:
@@ -243,6 +247,10 @@ class DataFetcher():
                     if df.empty:
                         print(f"No data for Wind Direction (Resultant or Scalar)")
                         continue 
+                    else:
+                        final_names.append(dct[d_scalar])
+                else: 
+                    final_names.append(dct[d_resultant])
             # for all other variables
             else:
                 if verbose:
@@ -250,17 +258,27 @@ class DataFetcher():
 
                 # if we want to do an extra check for PM2.5 since it's often not hourly 
                 # if code == pm25:
-                #     self.annual_checker(code, bdate, edate, site, county, state)
-            
+                #     year = self.annual_checker(code, bdate, edate, site, county, state)
+                #     if year == 0: # so there is no data
+                #         print(f"No hourly data for {dct[code]}!!")
+                #         continue
+                #     else:
+                #         df = self.get_concat_data(code, bdate, edate, site, county, state)
+                # else:
+                #     df = self.get_concat_data(code, bdate, edate, site, county, state)
+                # print(f"before")
                 df = self.get_concat_data(code, bdate, edate, site, county, state)
-                # print(df)
-
+                # print(f"after")
                 if df.empty:
                     print(f"No data for {dct[code]}")
                     continue
             #TODO: I moved this out of the if statements because the continue should jump them!! Not 100% sure it works though
             if processed:
-                    df = self.processor.process(df, dct[code])
+                # THIS IS WHERE IT'S EMPTY OR NOT
+                df = self.processor.process(df, dct[code])
+                if (not df.empty) and (code != s_resultant) and (code != d_resultant):
+                    final_names.append(dct[code])
+                    print(final_names)
 
             dfs.append(df)
         
@@ -271,7 +289,9 @@ class DataFetcher():
         # else:
         #     return self.processor.join(dfs)
 
-        return self.processor.join(dfs)
+        # print(dfs)
+
+        return self.processor.join(dfs, final_names)
 
     def annual_checker(self, code, bdate, edate, site, county, state):
         '''
@@ -288,13 +308,12 @@ class DataFetcher():
         Returns:
             Year with valid data or 0 if no valid data 
         '''
-
-        # keep the print!!!
-        print(f"There is hourly PM2.5 data starting on this year!")
-
-        # current plan
-
-        return 0
+        annual_df = self.get_data(ANNUAL_DATA_BY_SITE, code, bdate, edate, df = True, nparams={'state':state, 'county':county, 'site':site})
+        # later do a check
+        anuual_df = annual_df[annual_df['sample_duration'] == '1 HOUR']
+        if annual_df.empty: # no monitors that are doing hourly
+            return 0
+        return 1000
 
     def get_concat_data(self, code, bdate, edate, site=None, county=None, state=None):
         """
@@ -341,18 +360,19 @@ class DataFetcher():
             df = pd.concat([df, self.get_data(SAMPLE_DATA_BY_SITE, code, yr_start, edate, df=True, nparams={'state':state, 'county':county, 'site': site})])
 
         # now for the sanity check of if the data is valid!
-        # this checks dates, 
+        # this checks dates, site number, and parameter
         # if not df.empty:
         #     bdate_str = str(bdate)
         #     bdate_str = bdate_str[0:4] + '-' + bdate_str[4:6] + '-' + bdate_str[6:]
-        #     if (df.at[0, 'site_number'] != str(site)) or (df.at[0, 'parameter'] != str(self.find_name(code))) or (df.at[0, 'date_gmt'] != bdate_str):
-        #         # now check the end of the dataframe 
-        #         edate_str = str(edate)
-        #         edate_str = edate_str[0:4] + '-' + edate_str[4:6] + '-' + edate_str[6:]
-        #         last = len(df.index)
-        #         if (df.at[last, 'site_number'] != str(site)) or (df.at[last, 'parameter'] != str(self.find_name(code))) or (df.at[last, 'date_gmt'] != edate_str):
-        #             print(f"Data doesn't match query for {self.find_name(code)}!!")
+        #     edate_str = str(edate)
+        #     edate_str = edate_str[0:4] + '-' + edate_str[4:6] + '-' + edate_str[6:]
+        #     last = len(df.index) - 1
 
+            # start_check = (int(df.at[0, 'site_number']) != int(site)) or (str(df.at[0, 'parameter']) != str(self.find_name(code))) or (str(df.at[0, 'date_gmt']) != edate_str)
+            # end_check = (int(df.at[last, 'site_number']) != int(site)) or (str(df.at[last, 'parameter']) != str(self.find_name(code))) or (str(df.at[last, 'date_local']) != bdate_str)
+            # if (int(df.at[0, 'site_number']) != int(site)) or (str(df.at[0, 'parameter']) !=str(self.find_name(code))) or (str(df.at[0, 'date_gmt']) != edate_str) or (int(df.at[last, 'site_number']) != int(site)) or (str(df.at[last, 'parameter']) != str(self.find_name(code))) or (str(df.at[last, 'date_local']) != bdate_str):
+            #     print(f"Data did not match for {self.find_name(code)}!!!")
+        
         return df
     
     def find_best_location(self, state='06', county='037', bdate=20000101, edate=20210101):
