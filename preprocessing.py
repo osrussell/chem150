@@ -59,6 +59,7 @@ class Processor():
         df['datetime'] = pd.to_datetime(df['date_local'] + ' ' + df['time_local'])
         df = df[['datetime', 'sample_measurement', 'latitude', 'longitude', 'sample_duration', 'qualifier']]
         df = df.rename({'sample_measurement': measurement}, axis=1)
+        # re-does the qualifier column so the parameter qualifiers will all appear differently
         qualifier_rename = measurement + " - qualifier"
         df = df.rename({'qualifier': qualifier_rename}, axis=1)
 
@@ -66,7 +67,7 @@ class Processor():
         df = df[df['sample_duration'] == "1 HOUR"]
         df = df.drop(['sample_duration'], axis=1)
         if df.empty:
-            print(f"No hourly data for {measurement}")
+            print(f"No hourly data for {measurement} (pulled data)")
             df = df.drop(['latitude', 'longitude', measurement, qualifier_rename], axis=1)
             return df
         
@@ -83,11 +84,19 @@ class Processor():
     def join(self, dfs, code_names):
         '''
         Joins the concatanated data springs
+
+        Parameters
+            dfs: dataframe -- holds the concatted data
+            code_names: [String] -- has a list of all parameters that were successfully pulled
+
+        Returns:
+            Dataframe with all columns lined up to equivalent time stamp
         '''
         df = dfs[0].join(dfs[1:], how='outer')
         df = df.drop([x for x in df.columns if (('latitude' in x) and (x != 'latitude'))], axis=1)
         df = df.drop([x for x in df.columns if (('longitude' in x) and (x != 'longitude'))], axis=1)
 
+        # creates aggregation functions that deal with numeric and non-numeric data
         qualifier_names = [(x + " - qualifier") for x in code_names]
         funcs = {**{x: 'mean' for x in code_names}, **{x: 'first' for x in qualifier_names}}
         df = df.resample('1h').agg(funcs)

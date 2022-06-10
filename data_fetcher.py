@@ -195,6 +195,7 @@ class DataFetcher():
             count: String - County code.
             state: String - State code.
             processed: True - Whether to run dataset through processor class.
+            verbose: False - print statements for when data is being pulled
         
         Returns:
             HTTP Response Data: json or pd.DataFrame
@@ -218,7 +219,7 @@ class DataFetcher():
 
         dfs = []
         for code in codes:
-            # for wind speed
+            ##### if and elif for wind speed + direction: concating and appending names and empty check #####
             if (code == s_resultant):
                 if verbose:
                     print(f"\n Fetching data for Wind Speed...", end="\n\n")
@@ -235,7 +236,6 @@ class DataFetcher():
                         final_names.append(dct[s_scalar])
                 else: 
                     final_names.append(dct[s_resultant])
-            # for wind direction
             elif (code == d_resultant):
                 if verbose:
                     print(f"\n Fetching data for Wind Direction...", end="\n\n")
@@ -251,34 +251,40 @@ class DataFetcher():
                         final_names.append(dct[d_scalar])
                 else: 
                     final_names.append(dct[d_resultant])
-            # for all other variables
+                
+            #### for other variables: concatting + annual check for pm2.5 and empty check
             else:
                 if verbose:
                     print(f"\n Fetching data for {dct[code]}...", end="\n\n")
 
                 # if we want to do an extra check for PM2.5 since it's often not hourly 
-                # if code == pm25:
-                #     year = self.annual_checker(code, bdate, edate, site, county, state)
-                #     if year == 0: # so there is no data
-                #         print(f"No hourly data for {dct[code]}!!")
-                #         continue
-                #     else:
-                #         df = self.get_concat_data(code, bdate, edate, site, county, state)
-                # else:
-                #     df = self.get_concat_data(code, bdate, edate, site, county, state)
-                # print(f"before")
-                df = self.get_concat_data(code, bdate, edate, site, county, state)
-                # print(f"after")
+                if code == pm25:
+                    year = self.annual_checker(code, bdate, edate, site, county, state)
+                    if year == 0: # so there is no data
+                        print(f"No hourly data for {dct[code]} (annual check)")
+                        continue
+                    else:
+                        print(f"There is hourly data for {dct[code]} after the year {year}")
+                        start = int(str(year) + '0101')
+                        df = self.get_concat_data(code, start, edate, site, county, state)
+                        # now add NaNs for the rest of the time periods
+
+                # if any other code value
+                else:
+                    df = self.get_concat_data(code, bdate, edate, site, county, state)
+
+                # check for empty!
                 if df.empty:
                     print(f"No data for {dct[code]}")
                     continue
-            #TODO: I moved this out of the if statements because the continue should jump them!! Not 100% sure it works though
+
+            ##### Now processes the data, only returns hourly if there is any #####
             if processed:
-                # THIS IS WHERE IT'S EMPTY OR NOT
+                # processor only returns hourly data, prints if there is none
                 df = self.processor.process(df, dct[code])
+                # adds names if not wind and if not empty 
                 if (not df.empty) and (code != s_resultant) and (code != d_resultant):
                     final_names.append(dct[code])
-                    print(final_names)
 
             dfs.append(df)
         
@@ -306,18 +312,40 @@ class DataFetcher():
             state: String - State code.
         
         Returns:
-            Year with valid data or 0 if no valid data 
+            Int - Year with valid data or 0 if no valid data 
         '''
-        annual_df = self.get_data(ANNUAL_DATA_BY_SITE, code, bdate, edate, df = True, nparams={'state':state, 'county':county, 'site':site})
-        # later do a check
-        anuual_df = annual_df[annual_df['sample_duration'] == '1 HOUR']
-        if annual_df.empty: # no monitors that are doing hourly
-            return 0
-        return 1000
+        byear = bdate // 10000
+        eyear = edate // 10000
+        diff = eyear - byear
+
+        for x in range(0, diff+1, 2): # this loops for every 5 years 
+            # makes the start and end years based on the year
+            curr_year = byear + x
+
+            if curr_year == byear: # need the start date
+                yr_start = bdate
+            else:
+                yr_start = int(str(curr_year) + "0101")
+
+            if curr_year == eyear:
+                yr_end = edate
+            else:
+                yr_end = int(str(curr_year) + "1231")
+            print(f"ystart: {yr_start} and yend: {yr_end}")
+
+            # calls annual
+            annual_df = self.get_data(ANNUAL_DATA_BY_SITE, code, yr_start, yr_end, df = True, nparams={'state':state, 'county':county, 'site':site})
+            if annual_df.empty:
+                continue
+            annual_df = annual_df[annual_df['sample_duration'] == '1 HOUR']
+            if not annual_df.empty: # if it's not empty
+                return curr_year
+        return 0
 
     def get_concat_data(self, code, bdate, edate, site=None, county=None, state=None):
         """
         Automatically fetches multiple years in a row and concats them!
+        It also contains a check to make sure the data is accurate (currently commented out)
 
         Parameters:
             code: the parameter code we're fetching for 
