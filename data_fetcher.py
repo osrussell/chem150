@@ -172,7 +172,7 @@ class DataFetcher():
             print(f"Could not find {value}.")
             # print(e)
     
-    def find_name(self, code):
+    def find_name(self, code, verbose=False):
         """
         Inverse of find_code(...)
         """
@@ -181,8 +181,9 @@ class DataFetcher():
             code = self.all_codes.loc[code].value_represented
             return code
         except Exception as e:
-            print(f"Could not find {code}.")
-            # print(e)
+            if verbose:
+                print(f"Could not find {code}.")
+                # print(e)
     
     def create_dataset(self, bdate, edate, site=None, county=None, state=None, processed=True, verbose=False):
         """
@@ -273,6 +274,8 @@ class DataFetcher():
                 else:
                     df = self.get_concat_data(code, bdate, edate, site, county, state)
 
+                # print(f"{df}")
+
                 # check for empty!
                 if df.empty:
                     print(f"No data for {dct[code]}")
@@ -301,7 +304,7 @@ class DataFetcher():
 
     def annual_checker(self, code, bdate, edate, site, county, state):
         '''
-        Uses annual data call to check if there is data in any 5 year range 
+        Uses annual data call to check if there is data in any 2 year range 
 
         Parameters:
             code: the parameter code we're checking for.
@@ -331,7 +334,7 @@ class DataFetcher():
                 yr_end = edate
             else:
                 yr_end = int(str(curr_year) + "1231")
-            print(f"ystart: {yr_start} and yend: {yr_end}")
+            # print(f"ystart: {yr_start} and yend: {yr_end}")
 
             # calls annual
             annual_df = self.get_data(ANNUAL_DATA_BY_SITE, code, yr_start, yr_end, df = True, nparams={'state':state, 'county':county, 'site':site})
