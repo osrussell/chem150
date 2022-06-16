@@ -18,6 +18,13 @@ from preprocessing import Processor
 
 # load_dotenv()
 
+### =========================VARIABLES============================== ###
+
+CRITERIA_POLLUTANTS = ["Carbon monoxide", "Nitrogen dioxide (NO2)", "Ozone", "PM2.5 - Local Conditions"]
+PAMS = ["Nitric oxide (NO)", "Oxides of nitrogen (NOx)"]
+MET_VARS = ["Wind Direction - Resultant", "Wind Speed - Resultant", "Outdoor Temperature", "Relative Humidity ", "Solar radiation", "Ultraviolet radiation", "Barometric pressure"] 
+ALL_PARAMS = [*CRITERIA_POLLUTANTS , *MET_VARS, *PAMS]
+
 URL = 'https://aqs.epa.gov/data/api/'
 
 ANNUAL_DATA_BY_SITE = 'annualData/bySite'
@@ -265,7 +272,7 @@ class DataFetcher():
                         print(f"No hourly data for {dct[code]} (annual check)")
                         continue
                     else:
-                        print(f"There is hourly data for {dct[code]} after the year {year}")
+                        print(f"There is hourly data for {dct[code]} starting in the year {year}")
                         start = int(str(year) + '0101')
                         df = self.get_concat_data(code, start, edate, site, county, state)
                         # now add NaNs for the rest of the time periods
@@ -406,7 +413,7 @@ class DataFetcher():
         
         return df
     
-    def find_best_location(self, state='06', county='037', bdate=20000101, edate=20210101):
+    def find_best_location(self, state='06', county='037', bdate=20000101, edate=20210101, params=ALL_PARAMS):
         """
         Go through all sites in county and find site with the most data
 
@@ -425,7 +432,7 @@ class DataFetcher():
         sites = [(site['code'], site['value_represented']) for site in sites if site['value_represented']]
         print(f"Found {len(sites)} sites.")
 
-        codes = [self.find_code(v) for v in [*CRITERIA_POLLUTANTS , *MET_VARS, *PAMS]]
+        codes = [self.find_code(v) for v in params]
         # now it gets sample days 
         sample_days = [self.sample_day_in_year(year, year + 10000) for year in range(bdate, edate, 50000)]
         # sample_days = [(i, i+1130) for i in range(20000101, 20210101, 50000)]
@@ -638,9 +645,3 @@ class DataFetcher():
         final_emissions = [k for k in CEDS_AQS_MAP if len(set(CEDS_AQS_MAP[k]['matches']) & set(final_vocs)) != 0]
 
         return final_vocs, final_emissions
-
-### =========================VARIABLES============================== ###
-
-CRITERIA_POLLUTANTS = ["Carbon monoxide", "Nitrogen dioxide (NO2)", "Ozone", "PM2.5 - Local Conditions"]
-PAMS = ["Nitric oxide (NO)", "Oxides of nitrogen (NOx)"]
-MET_VARS = ["Wind Direction - Resultant", "Wind Speed - Resultant", "Outdoor Temperature", "Relative Humidity ", "Solar radiation", "Ultraviolet radiation", "Barometric pressure"] 
