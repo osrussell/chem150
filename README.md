@@ -8,12 +8,12 @@ This began as Thomas' lab repository and Olivia continued to add features to the
 Below we enumerate what is currently in this repository.
 
 <ul>
-    <li>Defines a Python API to fetch AQS data (```datafetcher.py```).</li>
-    <li>Provides a sample notebook to determine the best site to sample from in Los Angeles County (```lab_notebook.ipynb```).</li>
-    <li>Provides a sample notebook to fetch relevant AQS data (```lab_notebook.ipynb```).</li>
-    <li>Provides a sample notebook to explore relevant CEDS emissions data (```hemco_data_exploration.ipynb```).</li>
-    <li>Provides a python script to generate a 2018 dataset for LA North Main St (```generate.py```), including AQS and CEDS data.</li>
-    <li>Provides a sample notebook to run a Random Forest model on the above dataset (```lab_notebook_2.ipynb```).</li>
+    <li>Defines a Python API to fetch AQS data (<code>datafetcher.py</code>).</li>
+    <li>Provides a sample notebook to determine the best site to sample from in Los Angeles County (<code>lab_notebook.ipynb</code>).</li>
+    <li>Provides a sample notebook to fetch relevant AQS data (<code>lab_notebook.ipynb</code>).</li>
+    <li>Provides a sample notebook to explore relevant CEDS emissions data (<code>hemco_data_exploration.ipynb</code>).</li>
+    <li>Provides a python script to generate a 2018 dataset for LA North Main St (<code>generate.py</code>), including AQS and CEDS data.</li>
+    <li>Provides a sample notebook to run a Random Forest model on the above dataset (<code>lab_notebook_2.ipynb</code>).</li>
 </li>
 
 ## Setup
